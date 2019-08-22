@@ -13,6 +13,7 @@
 
 #include <atlbase.h>
 #include <atlapp.h>
+#include <atlstr.h>
 
 extern CAppModule _Module;
 
