@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AxialisIconCollection>
+  <Name></Name>
+  <Icon>
+    <Name>playlist</Name>
+    <StockIconName>playlist.axvi</StockIconName>
+    <StockIconFamily>Axialis Office Pro</StockIconFamily>
+    <StockIconSet>Multimedia</StockIconSet>
+    <StockOverlayName></StockOverlayName>
+    <StockOverlayPos>4</StockOverlayPos>
+    <ResourceIDValue>103</ResourceIDValue>
+    <ResourceID>ID_PLAYLIST</ResourceID>
+  </Icon>
+  <Icon>
+    <Name>button-refresh</Name>
+    <StockIconName>button-refresh.axvi</StockIconName>
+    <StockIconFamily>Axialis Office Pro</StockIconFamily>
+    <StockIconSet>Basic</StockIconSet>
+    <StockOverlayName></StockOverlayName>
+    <StockOverlayPos>4</StockOverlayPos>
+    <ResourceIDValue>100</ResourceIDValue>
+    <ResourceID>ID_BUTTON-REFRESH</ResourceID>
+  </Icon>
+  <Icon>
+    <Name>clipboard-copy-text</Name>
+    <StockIconName>clipboard-copy-text.axvi</StockIconName>
+    <StockIconFamily>Axialis Office Pro</StockIconFamily>
+    <StockIconSet>Basic</StockIconSet>
+    <StockOverlayName></StockOverlayName>
+    <StockOverlayPos>4</StockOverlayPos>
+    <ResourceIDValue>102</ResourceIDValue>
+    <ResourceID>ID_CLIPBOARD-COPY-TEXT</ResourceID>
+  </Icon>
+  <Icon>
+    <Name>button-help</Name>
+    <StockIconName>button-help.axvi</StockIconName>
+    <StockIconFamily>Axialis Office Pro</StockIconFamily>
+    <StockIconSet>Basic</StockIconSet>
+    <StockOverlayName></StockOverlayName>
+    <StockOverlayPos>4</StockOverlayPos>
+    <ResourceIDValue>101</ResourceIDValue>
+    <ResourceID>ID_BUTTON-HELP</ResourceID>
+  </Icon>
+</AxialisIconCollection>

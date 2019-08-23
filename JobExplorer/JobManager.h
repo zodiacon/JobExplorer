@@ -12,6 +12,7 @@ struct JobObjectEntry {
 	JobObjectEntry* ParentJob{ nullptr };
 	std::unordered_set<JobObjectEntry*> ChildJobs;
 	std::wstring Name;
+	wil::unique_handle hDup;
 	DWORD JobId{ 0 };
 	JOBOBJECT_BASIC_ACCOUNTING_INFORMATION BasicAccountInfo{};
 	bool IsServerSilo;

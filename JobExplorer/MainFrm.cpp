@@ -21,16 +21,30 @@ BOOL CMainFrame::OnIdle() {
 	return FALSE;
 }
 
+void CMainFrame::SelectJob(void * address) {
+	m_Tree.SelectItem(m_JobsMap.find(address)->second);
+}
+
 void CMainFrame::InitializeTree() {
 	m_Images.Create(16, 16, ILC_COLOR32 | ILC_COLOR, 4, 4);
-	m_Images.AddIcon(AtlLoadIcon(IDI_PARENTJOB));
-	m_Images.AddIcon(AtlLoadIcon(IDI_CHILDJOB));
-	m_Images.AddIcon(AtlLoadIcon(IDR_MAINFRAME));
-	m_Tree.SetImageList(m_Images, TVSIL_NORMAL);
+	UINT ids[] = { IDI_PARENTJOB, IDI_CHILDJOB, IDR_MAINFRAME, IDI_PROCESS };
+	for(auto id : ids)
+		m_Images.AddIcon(AtlLoadIcon(id));
 
+	m_Tree.SetImageList(m_Images, TVSIL_NORMAL);
+	
+	RefreshTree();
+}
+
+void CMainFrame::RefreshTree() {
+	m_Tree.LockWindowUpdate();
+	CWaitCursor wait;
+	m_Tree.DeleteAllItems();
 	m_AllJobsNode = m_Tree.InsertItem(L"Job List", 2, 2, TVI_ROOT, TVI_LAST);
+	m_JobsMap.clear();
 
 	m_JobMgr.EnumJobObjects();
+	m_JobsMap.reserve(m_JobMgr.GetJobObjects().size());
 
 	for (auto& job : m_JobMgr.GetJobObjects()) {
 		if (job->ParentJob == nullptr) {
@@ -38,6 +52,27 @@ void CMainFrame::InitializeTree() {
 		}
 	}
 	m_AllJobsNode.Select();
+	m_Tree.LockWindowUpdate(FALSE);
+}
+
+void CMainFrame::ExpandAll(bool expand) {
+	m_Tree.LockWindowUpdate();
+	for(auto item = m_Tree.GetRootItem(); item.m_hTreeItem; item = item.GetNextSibling())
+		item.Expand(expand ? TVE_EXPAND : TVE_COLLAPSE);
+	
+	m_Tree.EnsureVisible(m_Tree.GetSelectedItem());
+	m_Tree.LockWindowUpdate(FALSE);
+}
+
+CString CMainFrame::GetProcessImageName(DWORD pid) {
+	wil::unique_handle hProcess(::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
+	if (hProcess) {
+		WCHAR path[MAX_PATH];
+		DWORD size = MAX_PATH;
+		if (::QueryFullProcessImageName(hProcess.get(), 0, path, &size))
+			return ::wcsrchr(path, L'\\') + 1;
+	}
+	return L"";
 }
 
 void CMainFrame::AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon) {
@@ -47,8 +82,14 @@ void CMainFrame::AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon) {
 		text += CString(L" (") + job->Name.c_str() + L")";
 	auto node = m_Tree.InsertItem(text, icon, icon, parent, TVI_LAST);
 	node.SetData((DWORD_PTR)job->Object);
+	m_JobsMap.insert({ job->Object, node.m_hTreeItem });
 	for (auto& child : job->ChildJobs)
 		AddJobNode(child, node.m_hTreeItem, 1);
+	for (auto pid : job->Processes) {
+		CString name = GetProcessImageName((DWORD)pid);
+		text.Format(L"%s (%d)", name, pid);
+		m_Tree.InsertItem(text, 3, 3, node, TVI_LAST);
+	}
 	//m_Tree.Expand(node.m_hTreeItem, TVE_EXPAND);
 }
 
@@ -59,10 +100,20 @@ LRESULT CMainFrame::OnTreeSelectionChanged(int, LPNMHDR, BOOL&) {
 	}
 	else {
 		auto job = m_JobMgr.GetJobByObject((void*)selected.GetData());
-		m_view.RefreshJob(job);
+		if(job)
+			m_view.RefreshJob(job);
 	}
 
 	return 0;
+}
+
+LRESULT CMainFrame::OnTreeExpanding(int, LPNMHDR hdr, BOOL &) {
+	auto tv = (NMTREEVIEW*)hdr;
+	if (tv->action == TVE_EXPAND && tv->itemNew.lParam) {
+		// job node
+		
+	}
+	return LRESULT();
 }
 
 LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
@@ -87,6 +138,7 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	m_Tree.Create(m_splitter, rcDefault, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN |
 		TVS_HASLINES | TVS_LINESATROOT | TVS_HASBUTTONS | TVS_SHOWSELALWAYS, WS_EX_CLIENTEDGE);
 	m_view.Create(m_splitter, rcDefault, nullptr, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, WS_EX_CLIENTEDGE);
+	m_view.SetFrame(this);
 
 	m_splitter.SetSplitterPanes(m_Tree, m_view);
 	UpdateLayout();
@@ -95,7 +147,6 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	UIAddToolBar(hWndToolBar);
 	UISetCheck(ID_VIEW_TOOLBAR, 1);
 	UISetCheck(ID_VIEW_STATUS_BAR, 1);
-	UISetCheck(ID_VIEW_TREEPANE, 1);
 
 	CReBarCtrl(m_hWndToolBar).LockBands(TRUE);
 
@@ -132,8 +183,12 @@ LRESULT CMainFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl
 	return 0;
 }
 
-LRESULT CMainFrame::OnViewRefresh(WORD, WORD, HWND, BOOL&) {
-	return LRESULT();
+LRESULT CMainFrame::OnViewRefresh(WORD, WORD, HWND, BOOL& bHandled) {
+	if (m_Tree.GetSelectedItem() == m_AllJobsNode)
+		RefreshTree();
+	else
+		m_view.RefreshJob(nullptr);
+	return 0;
 }
 
 LRESULT CMainFrame::OnViewToolBar(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
@@ -161,11 +216,18 @@ LRESULT CMainFrame::OnAppAbout(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCt
 	return 0;
 }
 
-LRESULT CMainFrame::OnViewTreePane(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
-	bool bShow = (m_splitter.GetSinglePaneMode() != SPLIT_PANE_NONE);
-	m_splitter.SetSinglePaneMode(bShow ? SPLIT_PANE_NONE : SPLIT_PANE_RIGHT);
-	UISetCheck(ID_VIEW_TREEPANE, bShow);
+LRESULT CMainFrame::OnViewJobList(WORD, WORD, HWND, BOOL &) {
+	m_Tree.SelectItem(m_AllJobsNode.m_hTreeItem);
+	return 0;
+}
 
+LRESULT CMainFrame::OnViewExpandAll(WORD, WORD, HWND, BOOL &) {
+	ExpandAll(true);
+	return 0;
+}
+
+LRESULT CMainFrame::OnViewCollapseAll(WORD, WORD, HWND, BOOL &) {
+	ExpandAll(false);
 	return 0;
 }
 

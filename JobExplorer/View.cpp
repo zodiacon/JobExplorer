@@ -8,6 +8,7 @@
 #include "JobManager.h"
 #include "FormatHelper.h"
 #include <algorithm>
+#include "IFrame.h"
 
 BOOL CView::PreTranslateMessage(MSG* pMsg) {
 	pMsg;
@@ -15,50 +16,60 @@ BOOL CView::PreTranslateMessage(MSG* pMsg) {
 }
 
 void CView::RefreshJobList(JobManager& jm) {
-	m_ViewType = ViewType::JobList;
+	if (m_ViewType != ViewType::JobList) {
+		m_ViewType = ViewType::JobList;
+		while (m_List.DeleteColumn(0))
+			;
+
+		m_List.EnableGroupView(FALSE);
+		m_List.LockWindowUpdate();
+		m_List.ModifyStyle(LVS_NOCOLUMNHEADER, 0);
+
+		struct {
+			PCWSTR Text;
+			int Width;
+			int Format = LVCFMT_LEFT;
+		} columns[] = {
+			{ L"Name", 250 },
+			{ L"Address", 130, LVCFMT_RIGHT },
+			{ L"Active Processes", 100, LVCFMT_RIGHT },
+			{ L"CPU Time", 120, LVCFMT_RIGHT },
+			{ L"Total Processes", 100, LVCFMT_RIGHT },
+			{ L"Silo ID", 100, LVCFMT_RIGHT },
+			{ L"Silo Type", 100 },
+			//{ L"Child Job" , 80 }
+		};
+
+		int i = 0;
+		for (auto& c : columns)
+			m_List.InsertColumn(i++, c.Text, c.Format, c.Width);
+		m_List.LockWindowUpdate(FALSE);
+	}
 	m_List.DeleteAllItems();
-	while (m_List.DeleteColumn(0))
-		;
-
-	m_List.EnableGroupView(FALSE);
-	m_List.LockWindowUpdate();
-	m_List.ModifyStyle(LVS_NOCOLUMNHEADER, 0);
-
-	struct {
-		PCWSTR Text;
-		int Width;
-		int Format = LVCFMT_LEFT;
-	} columns[] = {
-		{ L"Name", 250 },
-		{ L"Address", 130, LVCFMT_RIGHT },
-		{ L"Active Processes", 100, LVCFMT_RIGHT },
-		{ L"CPU Time", 120, LVCFMT_RIGHT },
-		{ L"Total Processes", 100, LVCFMT_RIGHT },
-		{ L"Silo ID", 100, LVCFMT_RIGHT },
-		{ L"Silo Type", 100 },
-		//{ L"Child Job" , 80 }
-	};
-
-	int i = 0;
-	for (auto& c : columns)
-		m_List.InsertColumn(i++, c.Text, c.Format, c.Width);
-	m_List.LockWindowUpdate(FALSE);
-
-	if (m_AllJobs.empty())
-		m_AllJobs = jm.GetJobObjects();
+	m_AllJobs = jm.GetJobObjects();
+	DoSort(GetSortInfo(123));
 	m_List.SetItemCount(static_cast<int>(m_AllJobs.size()));
-	SetSortMark(123);
+	//SetSortMark(123);
 }
 
 void CView::RefreshJob(const std::shared_ptr<JobObjectEntry>& job) {
-	m_Job = job;
+	m_List.RemoveAllGroups();
+	m_List.DeleteAllItems();
 	m_ViewType = ViewType::SpecificJob;
 
-	m_List.DeleteAllItems();
-	while (m_List.DeleteColumn(0))
-		;
-	m_List.RemoveAllGroups();
-	m_List.ModifyStyle(0, LVS_NOCOLUMNHEADER);
+	if (job != nullptr) {
+		m_Job = job;
+
+		while (m_List.DeleteColumn(0))
+			;
+
+		m_List.InsertColumn(0, L"Process Name", LVCFMT_LEFT, 270);
+		m_List.InsertColumn(1, L"PID", LVCFMT_LEFT, 300);
+		m_List.InsertColumn(2, L"Start Time", LVCFMT_LEFT, 200);
+		//m_List.InsertColumn(3, L"Full Image Path", LVCFMT_LEFT, 700);
+
+		m_List.ModifyStyle(0, LVS_NOCOLUMNHEADER);
+	}
 
 	int count = 0;
 	LVGROUP group = { sizeof(group) };
@@ -75,28 +86,28 @@ void CView::RefreshJob(const std::shared_ptr<JobObjectEntry>& job) {
 	group.iGroupId = 2;
 	group.cItems = (int)m_Job->BasicAccountInfo.ActiveProcesses;
 	group.pszHeader = L"Processes";
-
 	m_List.InsertGroup(-1, &group);
-	count += group.cItems;
 
+	m_JobLimits = GetJobLimits(m_Job.get());
 	group.iGroupId = 3;
-	group.cItems = 10;
+	group.cItems = (int)m_JobLimits.size();
 	group.pszHeader = L"Limits";
 	m_List.InsertGroup(-1, &group);
-
-	m_List.InsertColumn(0, L"Process Name", LVCFMT_LEFT, 270);
-	m_List.InsertColumn(1, L"PID", LVCFMT_LEFT, 200);
-	m_List.InsertColumn(2, L"Start Time", LVCFMT_LEFT, 200);
-	//m_List.InsertColumn(3, L"Full Image Path", LVCFMT_LEFT, 700);
 
 	m_List.EnableGroupView(TRUE);
 	m_List.SetItemCount(30000);
 }
 
 void CView::DoSort(const SortInfo * si) {
+	if (si == nullptr)
+		return;
 	std::sort(m_AllJobs.begin(), m_AllJobs.end(), [this, si](const auto& j1, const auto& j2) {
 		return CompareJobs(j1.get(), j2.get(), si);
 		});
+}
+
+void CView::SetFrame(IFrame *pFrame) {
+	m_pFrame = pFrame;
 }
 
 LRESULT CView::OnDestroy(UINT, WPARAM, LPARAM, BOOL &) {
@@ -140,6 +151,22 @@ LRESULT CView::OnGetDispInfo(int, LPNMHDR pnmh, BOOL &) {
 		GetDispInfoJobList(di);
 	else
 		GetDispInfoJob(di);
+	return 0;
+}
+
+LRESULT CView::OnDoubleClick(int, LPNMHDR pnmh, BOOL &) {
+	if (m_ViewType != ViewType::JobList)
+		return 0;
+
+	int selected = m_List.GetSelectedIndex();
+	if (selected < 0)
+		return 0;
+
+	ATLASSERT(selected < m_AllJobs.size());
+
+	auto& job = m_AllJobs[selected];
+	m_pFrame->SelectJob(job->Object);
+
 	return 0;
 }
 
@@ -203,8 +230,21 @@ void CView::GetDispInfoJob(NMLVDISPINFO * di) {
 			case 1:		// processes
 				GetProcessesJobInfo(item.pszText, item.cchTextMax, index, item.iSubItem);
 				break;
+
+			case 2:		// limits
+				GetJobLimitsInfo(item.pszText, item.cchTextMax, index, item.iSubItem);
+				break;
+
 		}
 	}
+}
+
+void CView::GetJobLimitsInfo(PWSTR text, DWORD maxLen, int row, int col) {
+	ATLASSERT(row < m_JobLimits.size());
+	if (col > 1)
+		return;
+
+	::StringCchCopy(text, maxLen, col == 0 ? m_JobLimits[row].first : m_JobLimits[row].second);
 }
 
 bool CView::CompareJobs(const JobObjectEntry * j1, const JobObjectEntry * j2, const SortInfo * si) {
@@ -238,7 +278,7 @@ void CView::GetGeneralJobInfo(PWSTR text, DWORD maxLen, int row, int col) {
 	static PCWSTR names[] = {
 		L"Address:", L"Name:", L"Active Processes:", L"Total Processes:",
 		L"User Time:", L"Kernel Time:", L"CPU Time:", L"Terminated Processes:",
-		L"Page Faults:", L"Silo ID:"
+		L"Page Faults:", L"Silo:"
 	};
 
 	if (col == 0) {
@@ -291,21 +331,13 @@ void CView::GetGeneralJobInfo(PWSTR text, DWORD maxLen, int row, int col) {
 
 		case 9:
 			if (m_Job->JobId)
-				::StringCchPrintf(text, maxLen, L"%d", m_Job->JobId);
+				::StringCchPrintf(text, maxLen, L"%s (%d)", GetSiloType(m_Job.get()), m_Job->JobId);
 			break;
 
 	}
 }
 
 void CView::GetProcessesJobInfo(PWSTR text, DWORD maxLen, int row, int col) {
-	//if (row == 0) {
-	//	// headers
-	//	static PCWSTR headers[] = {
-	//		L"Name", L"PID", L"Start Time", L"Full Path"
-	//	};
-	//	::StringCchCopy(text, maxLen, headers[col]);
-	//	return;
-	//}
 	auto pid = (DWORD)(DWORD)m_Job->Processes[row];
 	if (col == 1) {
 		::StringCchPrintf(text, maxLen, L"PID: %d (0x%X)", pid, pid);
@@ -336,6 +368,115 @@ void CView::GetProcessesJobInfo(PWSTR text, DWORD maxLen, int row, int col) {
 			::QueryFullProcessImageName(hProcess.get(), 0, text, &size);
 			break;
 	}
+}
+
+std::vector<std::pair<CString, CString>> CView::GetJobLimits(JobObjectEntry * job) {
+	std::vector<std::pair<CString, CString>> limits;
+
+	if (!job->hDup)
+		return limits;
+
+	limits.reserve(4);
+	CString text;
+	auto hJob = job->hDup.get();
+
+	{
+		JOBOBJECT_EXTENDED_LIMIT_INFORMATION exinfo;
+		if (::QueryInformationJobObject(hJob, JobObjectExtendedLimitInformation, &exinfo, sizeof(exinfo), nullptr)) {
+			auto& info = exinfo.BasicLimitInformation;
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_BREAKAWAY_OK) {
+				limits.push_back({ L"Breakaway OK", L"" });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK) {
+				limits.push_back({ L"Silent Breakaway OK", L"" });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_ACTIVE_PROCESS) {
+				text.Format(L"%u", info.ActiveProcessLimit);
+				limits.push_back({ L"Active Processes:", text });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION) {
+				limits.push_back({ L"Die on Unhandled Exception", L"" });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME) {
+				text = FormatHelper::ToTimeSpan(info.PerJobUserTimeLimit.QuadPart);
+				JOBOBJECT_END_OF_JOB_TIME_INFORMATION eoj;
+				if (::QueryInformationJobObject(hJob, JobObjectEndOfJobTimeInformation, &eoj, sizeof(eoj), nullptr)) {
+					text += eoj.EndOfJobTimeAction == JOB_OBJECT_POST_AT_END_OF_JOB ? L" (Post)" : L" (Kill)";
+				}
+				limits.push_back({ L"Job User Time:", text });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_AFFINITY) {
+				text.Format(L"0x%p", info.Affinity);
+				limits.push_back({ L"Affinity:", text });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_PROCESS_TIME) {
+				limits.push_back({ L"Process User Time:", FormatHelper::ToTimeSpan(info.PerProcessUserTimeLimit.QuadPart) });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET) {
+				text.Format(L"Min: %s  Max: %s",
+					FormatHelper::SizeToString(info.MinimumWorkingSetSize), FormatHelper::SizeToString(info.MaximumWorkingSetSize));
+				limits.push_back({ L"Working Set:", text });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_PROCESS_MEMORY) {
+				limits.push_back({ L"Process Memory:", FormatHelper::SizeToString(exinfo.ProcessMemoryLimit) });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_JOB_MEMORY) {
+				limits.push_back({ L"Job Memory:", FormatHelper::SizeToString(exinfo.JobMemoryLimit) });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE) {
+				limits.push_back({ L"Kill on Job Close", L"" });
+			}
+			if (info.LimitFlags & JOB_OBJECT_LIMIT_SUBSET_AFFINITY) {
+				limits.push_back({ L"Allow Subset Affinity", L"" });
+			}
+		}
+	}
+	{
+		JOBOBJECT_BASIC_UI_RESTRICTIONS info;
+		if (::QueryInformationJobObject(hJob, JobObjectBasicUIRestrictions, &info, sizeof(info), nullptr) && info.UIRestrictionsClass > 0) {
+			static const struct {
+				PCWSTR Text;
+				DWORD Value;
+			} ui[] = {
+				{ L"Desktop", JOB_OBJECT_UILIMIT_DESKTOP },
+				{ L"Display Settings", JOB_OBJECT_UILIMIT_DISPLAYSETTINGS },
+				{ L"Exit Windows", JOB_OBJECT_UILIMIT_EXITWINDOWS },
+				{ L"Global Atoms", JOB_OBJECT_UILIMIT_GLOBALATOMS },
+				{ L"Handles", JOB_OBJECT_UILIMIT_HANDLES},
+				{ L"Read Clipboard", JOB_OBJECT_UILIMIT_READCLIPBOARD },
+				{ L"Write Clipboard", JOB_OBJECT_UILIMIT_WRITECLIPBOARD },
+				{ L"System Parameters", JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS},
+			};
+
+			for (auto& u : ui) {
+				if (info.UIRestrictionsClass & u.Value)
+					text += CString(u.Text) + L", ";
+			}
+			limits.push_back({ L"UI:", text.Left(text.GetLength() - 2) });
+		}
+	}
+	{
+		JOBOBJECT_CPU_RATE_CONTROL_INFORMATION info;
+		if (::QueryInformationJobObject(hJob, JobObjectCpuRateControlInformation, &info, sizeof(info), nullptr) &&
+			(info.ControlFlags & JOB_OBJECT_CPU_RATE_CONTROL_ENABLE) != 0) {
+			if (info.ControlFlags & JOB_OBJECT_CPU_RATE_CONTROL_WEIGHT_BASED) {
+				text.Format(L"Weight: %d", info.Weight);
+			}
+			else if (info.ControlFlags & JOB_OBJECT_CPU_RATE_CONTROL_MIN_MAX_RATE) {
+				text.Format(L"Min: %.2f%% Max:%.2f%%", info.MinRate / 100.0f, info.MaxRate / 100.0f);
+			}
+			else {	// CPU rate
+				text.Format(L"Rate: %.2f%%", info.CpuRate / 100.0f);
+			}
+
+			if (info.ControlFlags & JOB_OBJECT_CPU_RATE_CONTROL_HARD_CAP)
+				text += L" (Hard Cap)";
+			if (info.ControlFlags & JOB_OBJECT_CPU_RATE_CONTROL_NOTIFY)
+				text += L" (Notify)";
+			limits.push_back({ L"CPU Rate", text });
+		}
+	}
+	return limits;
 }
 
 HRESULT __stdcall CView::QueryInterface(REFIID riid, void ** ppvObject) {

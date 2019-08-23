@@ -68,6 +68,9 @@
     <ClInclude Include="FormatHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IFrame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JobExplorer.rc">
@@ -85,6 +88,12 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\parent.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\process.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\processes.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

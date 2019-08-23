@@ -28,8 +28,10 @@ bool JobManager::EnumJobObjects() {
 	
 	_jobObjects.clear();
 	_jobMap.clear();
+	_processesInJobs.clear();
 	_jobObjects.reserve(128);
 	_jobMap.reserve(128);
+	_processesInJobs.reserve(128);
 
 	BYTE nameBuffer[1024];
 	for (ULONG i = 0; i < p->NumberOfHandles; i++) {
@@ -46,11 +48,10 @@ bool JobManager::EnumJobObjects() {
 			entry->Object = hi.Object;
 			auto hDup = DuplicateJobHandle(entry->Handle, entry->ProcessId);
 			if (hDup) {
-				int count = 1024;
-				DWORD size = sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST) + (count - 1) * sizeof(ULONG_PTR);
-				auto buffer = std::make_unique<BYTE[]>(size);
-				if (::QueryInformationJobObject(hDup.get(), JobObjectBasicProcessIdList, buffer.get(), size, nullptr)) {
-					auto list = (JOBOBJECT_BASIC_PROCESS_ID_LIST*)buffer.get();
+				DWORD size = 1 << 12;
+				BYTE buffer[1 << 12];
+				if (::QueryInformationJobObject(hDup.get(), JobObjectBasicProcessIdList, buffer, size, nullptr)) {
+					auto list = (JOBOBJECT_BASIC_PROCESS_ID_LIST*)buffer;
 					entry->Processes.resize(list->NumberOfProcessIdsInList);
 					::memcpy(entry->Processes.data(), list->ProcessIdList, list->NumberOfProcessIdsInList * sizeof(ULONG_PTR));
 					for (auto pid : entry->Processes) {
@@ -69,6 +70,7 @@ bool JobManager::EnumJobObjects() {
 					if(info->Name.Buffer)
 						entry->Name = std::wstring(info->Name.Buffer, info->Name.Length / sizeof(WCHAR));
 				}
+				entry->hDup = std::move(hDup);
 			}
 			_jobMap.insert({ entry->Object, entry });
 			_jobObjects.push_back(entry);

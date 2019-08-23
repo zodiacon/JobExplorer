@@ -146,7 +146,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <ExceptionHandling />
+      <ExceptionHandling>Sync</ExceptionHandling>
       <DebugInformationFormat />
       <PreprocessorDefinitions>WIN32;_WINDOWS;STRICT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -176,7 +176,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <ExceptionHandling />
+      <ExceptionHandling>Sync</ExceptionHandling>
       <DebugInformationFormat />
       <PreprocessorDefinitions>_WINDOWS;STRICT;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -217,6 +217,7 @@
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="FormatHelper.h" />
+    <ClInclude Include="IFrame.h" />
     <ClInclude Include="JobManager.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="NtDll.h" />
@@ -233,6 +234,8 @@
     <Image Include="res\child.ico" />
     <Image Include="res\JobExplorer.ico" />
     <Image Include="res\parent.ico" />
+    <Image Include="res\process.ico" />
+    <Image Include="res\processes.ico" />
     <Image Include="res\toolbar.bmp" />
   </ItemGroup>
   <ItemGroup>

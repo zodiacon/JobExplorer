@@ -8,6 +8,8 @@
 #include "VirtualListView.h"
 #include "UndocListView.h"
 
+struct IFrame;
+
 class CView : 
 	public CWindowImpl<CView>,
 	public CVirtualListView<CView>,
@@ -22,12 +24,14 @@ public:
 		MESSAGE_HANDLER(WM_SIZE, OnSize)
 		MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
 		NOTIFY_CODE_HANDLER(LVN_GETDISPINFO, OnGetDispInfo)
+		NOTIFY_CODE_HANDLER(NM_DBLCLK, OnDoubleClick)
 		CHAIN_MSG_MAP(CVirtualListView<CView>)
 	END_MSG_MAP()
 
 	void RefreshJobList(JobManager& jm);
 	void RefreshJob(const std::shared_ptr<JobObjectEntry>& job);
 	void DoSort(const SortInfo* si);
+	void SetFrame(IFrame*);
 
 	// Handler prototypes (uncomment arguments if needed):
 	//	LRESULT MessageHandler(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -39,13 +43,18 @@ private:
 	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnSize(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
 	LRESULT OnGetDispInfo(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
+	LRESULT OnDoubleClick(int /*idCtrl*/, LPNMHDR pnmh, BOOL& /*bHandled*/);
 
 	void GetDispInfoJobList(NMLVDISPINFO* di);
 	void GetDispInfoJob(NMLVDISPINFO* di);
+
 	bool CompareJobs(const JobObjectEntry* j1, const JobObjectEntry* j2, const SortInfo* si);
 	static PCWSTR GetSiloType(const JobObjectEntry* job);
 	void GetGeneralJobInfo(PWSTR text, DWORD maxLen, int row, int col);
 	void GetProcessesJobInfo(PWSTR text, DWORD maxLen, int row, int col);
+	void GetJobLimitsInfo(PWSTR text, DWORD maxLen, int row, int col);
+
+	static std::vector<std::pair<CString, CString>> GetJobLimits(JobObjectEntry* job);
 
 private:
 	enum class ViewType {
@@ -60,6 +69,8 @@ private:
 	std::vector<std::shared_ptr<JobObjectEntry>> m_AllJobs;
 	CImageListManaged m_ImagesLarge, m_ImagesSmall;
 	CComPtr<IListView> m_spListView;
+	std::vector<std::pair<CString, CString>> m_JobLimits;
+	IFrame* m_pFrame{ nullptr };
 
 	// Inherited via IOwnerDataCallback
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void ** ppvObject) override;
