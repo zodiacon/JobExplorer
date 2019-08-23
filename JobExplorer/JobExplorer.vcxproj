@@ -202,6 +202,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
+    <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="JobExplorer.cpp" />
     <ClCompile Include="JobManager.cpp" />
     <ClCompile Include="MainFrm.cpp" />
@@ -215,12 +216,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
+    <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="JobManager.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="NtDll.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="UndocListView.h" />
     <ClInclude Include="View.h" />
+    <ClInclude Include="VirtualListView.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JobExplorer.rc" />

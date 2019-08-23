@@ -57,9 +57,11 @@ bool JobManager::EnumJobObjects() {
 						_processesInJobs[(DWORD)pid].push_back(entry);
 					}
 				}
-				JOBOBJECT_BASIC_ACCOUNTING_INFORMATION info;
-				if (::QueryInformationJobObject(hDup.get(), JobObjectBasicAccountingInformation, &info, sizeof(info), nullptr)) {
-					entry->TotalProcesses = info.TotalProcesses;
+				::QueryInformationJobObject(hDup.get(), JobObjectBasicAccountingInformation, &entry->BasicAccountInfo, sizeof(entry->BasicAccountInfo), nullptr);
+				SILOOBJECT_BASIC_INFORMATION siloInfo;
+				if (::QueryInformationJobObject(hDup.get(), JobObjectSiloBasicInformation, &siloInfo, sizeof(siloInfo), nullptr)) {
+					entry->JobId = siloInfo.SiloId;
+					entry->IsServerSilo = siloInfo.IsInServerSilo;
 				}
 				ULONG len;
 				if (STATUS_SUCCESS == ::NtQueryObject(hDup.get(), ObjectNameInformation, nameBuffer, sizeof(nameBuffer), &len)) {
@@ -73,6 +75,8 @@ bool JobManager::EnumJobObjects() {
 		}
 	}
 
+	ATLASSERT(_jobMap.size() == _jobObjects.size());
+
 	AnalyzeJobs();
 
 	return false;
@@ -80,6 +84,11 @@ bool JobManager::EnumJobObjects() {
 
 const std::vector<std::shared_ptr<JobObjectEntry>>& JobManager::GetJobObjects() const {
 	return _jobObjects;
+}
+
+std::shared_ptr<JobObjectEntry> JobManager::GetJobByObject(void* pObject) const {
+	auto it = _jobMap.find(pObject);
+	return it == _jobMap.end() ? nullptr : it->second;
 }
 
 wil::unique_handle JobManager::DuplicateJobHandle(HANDLE h, DWORD pid) {

@@ -37,6 +37,7 @@ void CMainFrame::InitializeTree() {
 			AddJobNode(job.get(), TVI_ROOT, 0);
 		}
 	}
+	m_AllJobsNode.Select();
 }
 
 void CMainFrame::AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon) {
@@ -48,7 +49,7 @@ void CMainFrame::AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon) {
 	node.SetData((DWORD_PTR)job->Object);
 	for (auto& child : job->ChildJobs)
 		AddJobNode(child, node.m_hTreeItem, 1);
-	m_Tree.Expand(node.m_hTreeItem, TVE_EXPAND);
+	//m_Tree.Expand(node.m_hTreeItem, TVE_EXPAND);
 }
 
 LRESULT CMainFrame::OnTreeSelectionChanged(int, LPNMHDR, BOOL&) {
@@ -56,6 +57,11 @@ LRESULT CMainFrame::OnTreeSelectionChanged(int, LPNMHDR, BOOL&) {
 	if (selected == m_AllJobsNode) {
 		m_view.RefreshJobList(m_JobMgr);
 	}
+	else {
+		auto job = m_JobMgr.GetJobByObject((void*)selected.GetData());
+		m_view.RefreshJob(job);
+	}
+
 	return 0;
 }
 

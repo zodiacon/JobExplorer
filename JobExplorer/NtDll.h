@@ -116,6 +116,11 @@ extern "C" NTSTATUS NTAPI NtQuerySystemInformation(
 	_In_ SYSTEM_INFORMATION_CLASS SystemInformationClass,
 	_Out_writes_bytes_opt_(SystemInformationLength) PVOID SystemInformation,
 	_In_ ULONG SystemInformationLength,
-	_Out_opt_ PULONG ReturnLength
-);
+	_Out_opt_ PULONG ReturnLength);
 
+extern "C" NTSTATUS NTAPI NtQueryInformationJobObject(
+	_In_opt_ HANDLE JobHandle,
+	_In_ JOBOBJECTINFOCLASS JobObjectInformationClass,
+	_Out_writes_bytes_(JobObjectInformationLength) PVOID JobObjectInformation,
+	_In_ ULONG JobObjectInformationLength,
+	_Out_opt_ PULONG ReturnLength);

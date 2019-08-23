@@ -1,10 +1,7 @@
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <wil\resource.h>
 #include <string>
 
 struct JobObjectEntry {
@@ -15,7 +12,9 @@ struct JobObjectEntry {
 	JobObjectEntry* ParentJob{ nullptr };
 	std::unordered_set<JobObjectEntry*> ChildJobs;
 	std::wstring Name;
-	DWORD TotalProcesses{ 0 };
+	DWORD JobId{ 0 };
+	JOBOBJECT_BASIC_ACCOUNTING_INFORMATION BasicAccountInfo{};
+	bool IsServerSilo;
 };
 
 class JobManager {
@@ -24,6 +23,7 @@ public:
 
 	bool EnumJobObjects();
 	const std::vector<std::shared_ptr<JobObjectEntry>>& GetJobObjects() const;
+	std::shared_ptr<JobObjectEntry> GetJobByObject(void* pObject) const;
 
 private:
 	static wil::unique_handle DuplicateJobHandle(HANDLE h, DWORD pid);

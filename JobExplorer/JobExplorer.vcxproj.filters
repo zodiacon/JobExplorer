@@ -33,6 +33,9 @@
     <ClCompile Include="JobManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FormatHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -54,6 +57,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NtDll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualListView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UndocListView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FormatHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
