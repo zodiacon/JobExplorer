@@ -8,6 +8,7 @@
 #include "aboutdlg.h"
 #include "View.h"
 #include "MainFrm.h"
+#include "ClipboardHelper.h"
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg) {
 	if (CFrameWindowImpl<CMainFrame>::PreTranslateMessage(pMsg))
@@ -117,13 +118,9 @@ LRESULT CMainFrame::OnTreeExpanding(int, LPNMHDR hdr, BOOL &) {
 }
 
 LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
-	// create command bar window
 	HWND hWndCmdBar = m_CmdBar.Create(m_hWnd, rcDefault, nullptr, ATL_SIMPLE_CMDBAR_PANE_STYLE);
-	// attach menu
 	m_CmdBar.AttachMenu(GetMenu());
-	// load command bar images
 	m_CmdBar.LoadImages(IDR_MAINFRAME);
-	// remove old menu
 	SetMenu(nullptr);
 
 	HWND hWndToolBar = CreateSimpleToolBarCtrl(m_hWnd, IDR_MAINFRAME, FALSE, ATL_SIMPLE_TOOLBAR_PANE_STYLE);
@@ -157,6 +154,7 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 	pLoop->AddIdleHandler(this);
 
 	InitializeTree();
+	m_Tree.SetFocus();
 
 	return 0;
 }
@@ -174,12 +172,6 @@ LRESULT CMainFrame::OnDestroy(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*
 
 LRESULT CMainFrame::OnFileExit(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
 	PostMessage(WM_CLOSE);
-	return 0;
-}
-
-LRESULT CMainFrame::OnFileNew(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
-	// TODO: add code to initialize document
-
 	return 0;
 }
 
@@ -228,6 +220,18 @@ LRESULT CMainFrame::OnViewExpandAll(WORD, WORD, HWND, BOOL &) {
 
 LRESULT CMainFrame::OnViewCollapseAll(WORD, WORD, HWND, BOOL &) {
 	ExpandAll(false);
+	return 0;
+}
+
+LRESULT CMainFrame::OnEditCopy(WORD, WORD, HWND, BOOL &handled) {
+	if (::GetFocus() == m_Tree) {
+		CString text;
+		m_Tree.GetItemText(m_Tree.GetSelectedItem(), text);
+		ClipboardHelper::CopyText(*this, text);
+	}
+	else {
+		handled = FALSE;
+	}
 	return 0;
 }
 

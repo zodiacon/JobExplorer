@@ -13,12 +13,11 @@
 
 #include <atlbase.h>
 #include <atlapp.h>
-#include <atlstr.h>
 
 extern CAppModule _Module;
 
 #include <atlwin.h>
-
+#include <atlstr.h>
 #include <atlframe.h>
 #include <atlctrls.h>
 #include <atldlgs.h>
