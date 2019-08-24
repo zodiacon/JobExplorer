@@ -7,6 +7,6 @@ Currently, some information is missing (such as Silo information).
 
 ## Screen shots
 
-![Job Explorer1](https://github.com/zodiacon/JobExplorer/blob/master/jobexplorer1.png)
+![Job Explorer1](https://github.com/zodiacon/JobExplorer/blob/master/JobExplorer1.png)
 
-![Job Explorer2](https://github.com/zodiacon/JobExplorer/blob/master/jobexplorer2.png)
+![Job Explorer2](https://github.com/zodiacon/JobExplorer/blob/master/JobExplorer2.png)
