@@ -9,6 +9,7 @@
 #include "View.h"
 #include "MainFrm.h"
 #include "ClipboardHelper.h"
+#include "SecurityHelper.h"
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg) {
 	if (CFrameWindowImpl<CMainFrame>::PreTranslateMessage(pMsg))
@@ -119,8 +120,25 @@ LRESULT CMainFrame::OnTreeExpanding(int, LPNMHDR hdr, BOOL &) {
 
 LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
 	HWND hWndCmdBar = m_CmdBar.Create(m_hWnd, rcDefault, nullptr, ATL_SIMPLE_CMDBAR_PANE_STYLE);
-	m_CmdBar.AttachMenu(GetMenu());
+	CMenuHandle menu = GetMenu();
+
+	if (SecurityHelper::IsRunningElevated()) {
+		// delete menu item
+		menu.GetSubMenu(0).DeleteMenu(ID_FILE_RUNASADMINISTRATOR, MF_BYCOMMAND);
+		menu.GetSubMenu(0).DeleteMenu(0, MF_BYPOSITION);	// delete separator
+
+		CString text;
+		GetWindowText(text);
+		text += L" (Administrator)";
+		SetWindowText(text);
+	}
+	else {
+		m_CmdBar.AddIcon(SecurityHelper::GetShieldIcon(), ID_FILE_RUNASADMINISTRATOR);
+	}
+
+	m_CmdBar.AttachMenu(menu);
 	m_CmdBar.LoadImages(IDR_MAINFRAME);
+
 	SetMenu(nullptr);
 
 	HWND hWndToolBar = CreateSimpleToolBarCtrl(m_hWnd, IDR_MAINFRAME, FALSE, ATL_SIMPLE_TOOLBAR_PANE_STYLE);
@@ -232,6 +250,24 @@ LRESULT CMainFrame::OnEditCopy(WORD, WORD, HWND, BOOL &handled) {
 	else {
 		handled = FALSE;
 	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnRunAsAdmin(WORD, WORD, HWND, BOOL &) {
+	WCHAR path[MAX_PATH];
+	DWORD size = MAX_PATH;
+	if (::QueryFullProcessImageName(::GetCurrentProcess(), 0, path, &size)) {
+		SHELLEXECUTEINFO shex = { sizeof(shex) };
+		shex.lpVerb = L"runas";
+		shex.lpFile = path;
+		shex.nShow = SW_SHOWDEFAULT;
+		if (::ShellExecuteEx(&shex)) {
+			PostMessage(WM_CLOSE);
+			return 0;
+		}
+	}
+
+	MessageBox(L"Elevation failed", L"Job Explorer");
 	return 0;
 }
 

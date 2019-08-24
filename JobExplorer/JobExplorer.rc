@@ -77,6 +77,8 @@ IDR_MAINFRAME MENU
 BEGIN
     POPUP "&File"
     BEGIN
+        MENUITEM "&Run as Administrator",       ID_FILE_RUNASADMINISTRATOR
+        MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
     POPUP "&Edit"
@@ -127,7 +129,7 @@ CAPTION "About Job Explorer"
 FONT 9, "Segoe UI", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,68,81,50,14
-    CTEXT           "Job Explorer v0.5\n\n(C)2019 Pavel Yosifovich",IDC_STATIC,35,24,125,32
+    CTEXT           "Job Explorer v0.6\n\n(C)2019 Pavel Yosifovich",IDC_STATIC,35,24,125,32
     ICON            IDR_MAINFRAME,IDC_STATIC,7,7,20,20
 END
 
@@ -232,7 +234,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDR_MAINFRAME           "Job Explorer v0.5 (C)2019 Pavel Yosifovich"
+    IDR_MAINFRAME           "Job Explorer v0.6 (C)2019 Pavel Yosifovich"
 END
 
 STRINGTABLE
