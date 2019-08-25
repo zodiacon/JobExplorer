@@ -71,7 +71,7 @@ bool JobManager::EnumJobObjects() {
 				if (STATUS_SUCCESS == ::NtQueryObject(hDup.get(), ObjectNameInformation, nameBuffer, sizeof(nameBuffer), &len)) {
 					auto info = (OBJECT_NAME_INFORMATION*)nameBuffer;
 					if(info->Name.Buffer)
-						entry->Name = std::wstring(info->Name.Buffer, info->Name.Length / sizeof(WCHAR));
+						entry->Name = CString(info->Name.Buffer, info->Name.Length / sizeof(WCHAR));
 				}
 				entry->hDup = std::move(hDup);
 			}

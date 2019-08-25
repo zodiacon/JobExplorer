@@ -16,6 +16,9 @@ BOOL CMainFrame::PreTranslateMessage(MSG* pMsg) {
 	if (CFrameWindowImpl<CMainFrame>::PreTranslateMessage(pMsg))
 		return TRUE;
 
+	if (m_pFind && m_pFind->IsDialogMessageW(pMsg))
+		return TRUE;
+
 	return m_view.PreTranslateMessage(pMsg);
 }
 
@@ -73,8 +76,8 @@ void CMainFrame::ExpandAll(bool expand) {
 void CMainFrame::AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon) {
 	CString text;
 	text.Format(L"0x%p", job->Object);
-	if (!job->Name.empty())
-		text += CString(L" (") + job->Name.c_str() + L")";
+	if (!job->Name.IsEmpty())
+		text += CString(L" (") + job->Name + L")";
 	auto node = m_Tree.InsertItem(text, icon, icon, parent, TVI_LAST);
 	node.SetData((DWORD_PTR)job->Object);
 	m_JobsMap.insert({ job->Object, node.m_hTreeItem });
@@ -89,7 +92,66 @@ void CMainFrame::AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon) {
 }
 
 LRESULT CMainFrame::OnEditFind(WORD, WORD, HWND, BOOL&) {
-	return LRESULT();
+	if (m_pFind == nullptr || m_pFind->IsTerminating()) {
+		m_pFind = new CFindReplaceDialog;
+		m_pFind->Create(TRUE, nullptr);
+		m_pFind->ShowWindow(SW_SHOWDEFAULT);
+	}
+	return 0;
+}
+
+LRESULT CMainFrame::OnFind(UINT, WPARAM, LPARAM, BOOL& bHandled) {
+	ATLASSERT(m_pFind);
+	if (m_pFind->IsTerminating()) {
+		m_pFind = nullptr;
+		return 0;
+	}
+	auto isDown = m_pFind->SearchDown();
+
+	CString text(m_pFind->GetFindString());
+	text.MakeUpper();
+
+	auto item = m_Tree.GetSelectedItem();
+	for (;;) {
+		item = isDown ? item.GetNextVisible() : item.GetPrevVisible();
+		if (item == nullptr)
+			break;
+		std::shared_ptr<JobObjectEntry> job;
+		while (job == nullptr && item != nullptr) {
+			job = m_JobMgr.GetJobByObject((void*)item.GetData());
+			if (job != nullptr)
+				break;
+			item = isDown ? item.GetNextVisible() : item.GetPrevVisible();
+		}
+
+		if (job) {
+			bool found = false;
+			CString name(job->Name);
+			name.MakeUpper();
+			if (name.Find(text) >= 0) {
+				found = true;
+				break;
+			}
+			if (!found) {
+				for (auto& p : job->Processes) {
+					auto pname = ProcessHelper::GetProcessName((DWORD)p);
+					pname.MakeUpper();
+					if (pname.Find(text) >= 0) {
+						found = true;
+						break;
+					}
+				}
+			}
+			if (found) {
+				item.Select();
+				m_FindPos = item;
+				return 0;
+			}
+		}
+	}
+	MessageBox(L"Job/process not found", L"Job Explorer");
+	m_FindPos = nullptr;
+	return 0;
 }
 
 LRESULT CMainFrame::OnTreeSelectionChanged(int, LPNMHDR, BOOL&) {

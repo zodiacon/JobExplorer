@@ -206,7 +206,7 @@ void CView::GetDispInfoJobList(NMLVDISPINFO * di) {
 				break;
 
 			case 0:		// name
-				item.pszText = (PWSTR)data->Name.c_str();
+				item.pszText = (PWSTR)(PCWSTR)data->Name;
 				break;
 
 			case 2:		// active processes
@@ -351,7 +351,7 @@ void CView::GetGeneralJobInfo(PWSTR text, DWORD maxLen, int row, int col) {
 			break;
 
 		case 1:
-			::StringCchCopy(text, maxLen, m_Job->Name.c_str());
+			::StringCchCopy(text, maxLen, m_Job->Name);
 			break;
 
 		case 2:
