@@ -85,6 +85,11 @@ BEGIN
     BEGIN
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
     END
+	POPUP "&Search"
+	BEGIN
+		MENUITEM "&Find...\tCtrl+F",			ID_EDIT_FIND
+	END
+
     POPUP "&View"
     BEGIN
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
@@ -129,7 +134,7 @@ CAPTION "About Job Explorer"
 FONT 9, "Segoe UI", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,68,81,50,14
-    CTEXT           "Job Explorer v0.6\n\n(C)2019 Pavel Yosifovich",IDC_STATIC,35,24,125,32
+    CTEXT           "Job Explorer v0.7\n\n(C)2019 Pavel Yosifovich",IDC_STATIC,35,24,125,32
     ICON            IDR_MAINFRAME,IDC_STATIC,7,7,20,20
 END
 
@@ -200,12 +205,12 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "FileDescription", "JobExplorer Module"
+            VALUE "FileDescription", "Job Explorer"
             VALUE "FileVersion", "1, 0, 0, 1"
             VALUE "InternalName", "JobExplorer"
-            VALUE "LegalCopyright", "Copyright 2019"
+            VALUE "LegalCopyright", "(C)2019 Pavel Yosifovich"
             VALUE "OriginalFilename", "JobExplorer.exe"
-            VALUE "ProductName", "JobExplorer Module"
+            VALUE "ProductName", "Job Explorer"
             VALUE "ProductVersion", "1, 0, 0, 1"
         END
     END
@@ -234,7 +239,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDR_MAINFRAME           "Job Explorer v0.6 (C)2019 Pavel Yosifovich"
+    IDR_MAINFRAME           "Job Explorer v0.7 (C)2019 Pavel Yosifovich"
 END
 
 STRINGTABLE

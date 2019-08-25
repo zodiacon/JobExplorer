@@ -4,6 +4,13 @@
 #include <unordered_set>
 #include <string>
 
+struct OpenHandle {
+	DWORD hJob;
+	DWORD ProcessId;
+
+	OpenHandle(DWORD h, DWORD pid);
+};
+
 struct JobObjectEntry {
 	DWORD ProcessId;
 	HANDLE Handle;
@@ -11,6 +18,7 @@ struct JobObjectEntry {
 	std::vector<ULONG_PTR> Processes;
 	JobObjectEntry* ParentJob{ nullptr };
 	std::unordered_set<JobObjectEntry*> ChildJobs;
+	std::vector<OpenHandle> OpenHandles;
 	std::wstring Name;
 	wil::unique_handle hDup;
 	DWORD JobId{ 0 };

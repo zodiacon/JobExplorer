@@ -207,6 +207,7 @@
     <ClCompile Include="JobExplorer.cpp" />
     <ClCompile Include="JobManager.cpp" />
     <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="ProcessHelper.cpp" />
     <ClCompile Include="SecurityHelper.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -224,6 +225,7 @@
     <ClInclude Include="JobManager.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="NtDll.h" />
+    <ClInclude Include="ProcessHelper.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SecurityHelper.h" />
     <ClInclude Include="stdafx.h" />

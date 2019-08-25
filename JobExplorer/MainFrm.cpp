@@ -10,6 +10,7 @@
 #include "MainFrm.h"
 #include "ClipboardHelper.h"
 #include "SecurityHelper.h"
+#include "ProcessHelper.h"
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg) {
 	if (CFrameWindowImpl<CMainFrame>::PreTranslateMessage(pMsg))
@@ -29,7 +30,7 @@ void CMainFrame::SelectJob(void * address) {
 
 void CMainFrame::InitializeTree() {
 	m_Images.Create(16, 16, ILC_COLOR32 | ILC_COLOR, 4, 4);
-	UINT ids[] = { IDI_PARENTJOB, IDI_CHILDJOB, IDR_MAINFRAME, IDI_PROCESS };
+	UINT ids[] = { IDI_PARENTJOB, IDI_CHILDJOB, IDR_MAINFRAME, IDI_PROCESS, IDI_PROCESSES };
 	for(auto id : ids)
 		m_Images.AddIcon(AtlLoadIcon(id));
 
@@ -43,6 +44,8 @@ void CMainFrame::RefreshTree() {
 	CWaitCursor wait;
 	m_Tree.DeleteAllItems();
 	m_AllJobsNode = m_Tree.InsertItem(L"Job List", 2, 2, TVI_ROOT, TVI_LAST);
+	//m_ProcessesNode = m_Tree.InsertItem(L"Processes", 4, 4, TVI_ROOT, TVI_LAST);
+
 	m_JobsMap.clear();
 
 	m_JobMgr.EnumJobObjects();
@@ -53,6 +56,7 @@ void CMainFrame::RefreshTree() {
 			AddJobNode(job.get(), TVI_ROOT, 0);
 		}
 	}
+	m_AllJobsNode.Expand(TVE_EXPAND);
 	m_AllJobsNode.Select();
 	m_Tree.LockWindowUpdate(FALSE);
 }
@@ -66,17 +70,6 @@ void CMainFrame::ExpandAll(bool expand) {
 	m_Tree.LockWindowUpdate(FALSE);
 }
 
-CString CMainFrame::GetProcessImageName(DWORD pid) {
-	wil::unique_handle hProcess(::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid));
-	if (hProcess) {
-		WCHAR path[MAX_PATH];
-		DWORD size = MAX_PATH;
-		if (::QueryFullProcessImageName(hProcess.get(), 0, path, &size))
-			return ::wcsrchr(path, L'\\') + 1;
-	}
-	return L"";
-}
-
 void CMainFrame::AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon) {
 	CString text;
 	text.Format(L"0x%p", job->Object);
@@ -88,11 +81,15 @@ void CMainFrame::AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon) {
 	for (auto& child : job->ChildJobs)
 		AddJobNode(child, node.m_hTreeItem, 1);
 	for (auto pid : job->Processes) {
-		CString name = GetProcessImageName((DWORD)pid);
+		CString name = ProcessHelper::GetProcessName((DWORD)pid);
 		text.Format(L"%s (%d)", name, pid);
 		m_Tree.InsertItem(text, 3, 3, node, TVI_LAST);
 	}
 	//m_Tree.Expand(node.m_hTreeItem, TVE_EXPAND);
+}
+
+LRESULT CMainFrame::OnEditFind(WORD, WORD, HWND, BOOL&) {
+	return LRESULT();
 }
 
 LRESULT CMainFrame::OnTreeSelectionChanged(int, LPNMHDR, BOOL&) {

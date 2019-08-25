@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "IFrame.h"
 #include "ClipboardHelper.h"
+#include "ProcessHelpers.h"
 
 BOOL CView::PreTranslateMessage(MSG* pMsg) {
 	pMsg;
@@ -66,7 +67,7 @@ void CView::RefreshJob(const std::shared_ptr<JobObjectEntry>& job) {
 
 		m_List.InsertColumn(0, L"Process Name", LVCFMT_LEFT, 270);
 		m_List.InsertColumn(1, L"PID", LVCFMT_LEFT, 300);
-		m_List.InsertColumn(2, L"Start Time", LVCFMT_LEFT, 200);
+		m_List.InsertColumn(2, L"Start Time", LVCFMT_LEFT, 300);
 		//m_List.InsertColumn(3, L"Full Image Path", LVCFMT_LEFT, 700);
 
 		m_List.ModifyStyle(0, LVS_NOCOLUMNHEADER);
@@ -95,8 +96,13 @@ void CView::RefreshJob(const std::shared_ptr<JobObjectEntry>& job) {
 	group.pszHeader = L"Limits";
 	m_List.InsertGroup(-1, &group);
 
+	group.iGroupId = 4;
+	group.cItems = (int)m_Job->OpenHandles.size();
+	group.pszHeader = L"Open Handles";
+	m_List.InsertGroup(-1, &group);
+
 	m_List.EnableGroupView(TRUE);
-	m_List.SetItemCount(3000);
+	m_List.SetItemCount(4000);
 }
 
 void CView::DoSort(const SortInfo * si) {
@@ -255,6 +261,10 @@ void CView::GetDispInfoJob(NMLVDISPINFO * di) {
 				GetJobLimitsInfo(item.pszText, item.cchTextMax, index, item.iSubItem);
 				break;
 
+			case 3:		// open handles
+				GetJobOpenHandlesInfo(item.pszText, item.cchTextMax, index, item.iSubItem);
+				break;
+
 		}
 	}
 }
@@ -264,6 +274,28 @@ void CView::GetJobLimitsInfo(PWSTR text, DWORD maxLen, int row, int col) {
 		return;
 
 	::StringCchCopy(text, maxLen, col == 0 ? m_JobLimits[row].first : m_JobLimits[row].second);
+}
+
+void CView::GetJobOpenHandlesInfo(PWSTR text, DWORD maxLen, int row, int col) {
+	auto& ohs = m_Job->OpenHandles;
+	if (row >= ohs.size())
+		return;
+
+	auto& oh = ohs[row];
+
+	switch (col) {
+		case 0:
+			::StringCchPrintf(text, maxLen, L"Handle: %d (0x%X)", oh.hJob, oh.hJob);
+			break;
+
+		case 1:
+			::StringCchPrintf(text, maxLen, L"PID: %d (0x%X)", oh.ProcessId, oh.ProcessId);
+			break;
+
+		case 2:
+			::StringCchCopy(text, maxLen, ProcessHelper::GetProcessName(oh.ProcessId));
+			break;
+	}
 }
 
 bool CView::CompareJobs(const JobObjectEntry * j1, const JobObjectEntry * j2, const SortInfo * si) {
@@ -458,6 +490,7 @@ std::vector<std::pair<CString, CString>> CView::GetJobLimits(JobObjectEntry * jo
 	{
 		JOBOBJECT_BASIC_UI_RESTRICTIONS info;
 		if (::QueryInformationJobObject(hJob, JobObjectBasicUIRestrictions, &info, sizeof(info), nullptr) && info.UIRestrictionsClass > 0) {
+			text.Empty();
 			static const struct {
 				PCWSTR Text;
 				DWORD Value;
@@ -476,13 +509,15 @@ std::vector<std::pair<CString, CString>> CView::GetJobLimits(JobObjectEntry * jo
 				if (info.UIRestrictionsClass & u.Value)
 					text += CString(u.Text) + L", ";
 			}
-			limits.push_back({ L"UI:", text.Left(text.GetLength() - 2) });
+			if(text.GetLength() > 0)
+				limits.push_back({ L"UI:", text.Left(text.GetLength() - 2) });
 		}
 	}
 	{
 		JOBOBJECT_CPU_RATE_CONTROL_INFORMATION info;
 		if (::QueryInformationJobObject(hJob, JobObjectCpuRateControlInformation, &info, sizeof(info), nullptr) &&
 			(info.ControlFlags & JOB_OBJECT_CPU_RATE_CONTROL_ENABLE) != 0) {
+			text.Empty();
 			if (info.ControlFlags & JOB_OBJECT_CPU_RATE_CONTROL_WEIGHT_BASED) {
 				text.Format(L"Weight: %d", info.Weight);
 			}

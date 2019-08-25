@@ -37,6 +37,7 @@ public:
 		COMMAND_ID_HANDLER(ID_APP_ABOUT, OnAppAbout)
 		COMMAND_ID_HANDLER(ID_VIEW_REFRESH, OnViewRefresh)
 		COMMAND_ID_HANDLER(ID_EDIT_COPY, OnEditCopy)
+		COMMAND_ID_HANDLER(ID_EDIT_FIND, OnEditFind)
 		COMMAND_ID_HANDLER(ID_FILE_RUNASADMINISTRATOR, OnRunAsAdmin)
 		NOTIFY_CODE_HANDLER(TVN_SELCHANGED, OnTreeSelectionChanged)
 		NOTIFY_CODE_HANDLER(TVN_ITEMEXPANDING, OnTreeExpanding)
@@ -55,9 +56,9 @@ private:
 	void AddJobNode(JobObjectEntry* job, HTREEITEM parent, int icon);
 	void RefreshTree();
 	void ExpandAll(bool expand);
-	static CString GetProcessImageName(DWORD pid);
 
 private:
+	LRESULT OnEditFind(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/);
 	LRESULT OnTreeSelectionChanged(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnTreeExpanding(int /*idCtrl*/, LPNMHDR /*pnmh*/, BOOL& /*bHandled*/);
 	LRESULT OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
@@ -80,6 +81,6 @@ private:
 	CView m_view;
 	CCommandBarCtrl m_CmdBar;
 	JobManager m_JobMgr;
-	CTreeItem m_AllJobsNode;
+	CTreeItem m_AllJobsNode, m_ProcessesNode;
 	CImageListManaged m_Images;
 };

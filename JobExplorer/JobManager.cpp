@@ -39,13 +39,16 @@ bool JobManager::EnumJobObjects() {
 		if (hi.ObjectTypeIndex == JobTypeIndex) {
 			// job object handle
 
-			if (_jobMap.find(hi.Object) != _jobMap.end())
+			if (auto it = _jobMap.find(hi.Object); it != _jobMap.end()) {
+				it->second->OpenHandles.emplace_back(OpenHandle((DWORD)hi.HandleValue, (DWORD)hi.UniqueProcessId));
 				continue;
+			}
 
 			auto entry = std::make_shared<JobObjectEntry>();
 			entry->Handle = reinterpret_cast<HANDLE>(hi.HandleValue);
 			entry->ProcessId = (DWORD)hi.UniqueProcessId;
 			entry->Object = hi.Object;
+			entry->OpenHandles.emplace_back(OpenHandle((DWORD)hi.HandleValue, (DWORD)hi.UniqueProcessId));
 			auto hDup = DuplicateJobHandle(entry->Handle, entry->ProcessId);
 			if (hDup) {
 				DWORD size = 1 << 12;
@@ -157,3 +160,5 @@ bool JobManager::EnableDebugPrivilege() {
 	return ::GetLastError() == ERROR_SUCCESS;
 }
 
+OpenHandle::OpenHandle(DWORD h, DWORD pid) : hJob(h), ProcessId(pid) {
+}

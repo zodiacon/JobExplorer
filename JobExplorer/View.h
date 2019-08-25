@@ -57,6 +57,7 @@ private:
 	void GetGeneralJobInfo(PWSTR text, DWORD maxLen, int row, int col);
 	void GetProcessesJobInfo(PWSTR text, DWORD maxLen, int row, int col);
 	void GetJobLimitsInfo(PWSTR text, DWORD maxLen, int row, int col);
+	void GetJobOpenHandlesInfo(PWSTR text, DWORD maxLen, int row, int col);
 
 	static std::vector<std::pair<CString, CString>> GetJobLimits(JobObjectEntry* job);
 
