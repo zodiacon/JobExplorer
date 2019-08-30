@@ -85,11 +85,10 @@ BEGIN
     BEGIN
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
     END
-	POPUP "&Search"
-	BEGIN
-		MENUITEM "&Find...\tCtrl+F",			ID_EDIT_FIND
-	END
-
+    POPUP "&Search"
+    BEGIN
+        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FIND
+    END
     POPUP "&View"
     BEGIN
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
@@ -117,10 +116,15 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "res\\JobExplorer.ico"
+
 IDI_CHILDJOB            ICON                    "res\\child.ico"
+
 IDI_PARENTJOB           ICON                    "res\\parent.ico"
+
 IDI_PROCESS             ICON                    "res\\process.ico"
+
 IDI_PROCESSES           ICON                    "res\\processes.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -133,7 +137,7 @@ CAPTION "About Job Explorer"
 FONT 9, "Segoe UI", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,68,81,50,14
-    CTEXT           "Job Explorer v0.8\n\n(C)2019 Pavel Yosifovich",IDC_STATIC,35,24,125,32
+    CTEXT           "Job Explorer v0.9\n\n(C)2019 Pavel Yosifovich",IDC_STATIC,35,24,125,32
     ICON            IDR_MAINFRAME,IDC_STATIC,7,7,20,20
 END
 
@@ -179,9 +183,9 @@ BEGIN
     VK_F6,          ID_NEXT_PANE,           VIRTKEY 
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT
     VK_F5,          ID_VIEW_REFRESH,        VIRTKEY 
-	"F",			ID_EDIT_FIND,			VIRTKEY, CONTROL
-	VK_F3,			ID_EDIT_FIND_NEXT,		VIRTKEY
-	VK_F3,			ID_EDIT_FIND_PREVIOUS,	VIRTKEY, SHIFT
+    "F",            ID_EDIT_FIND,           VIRTKEY, CONTROL
+    VK_F3,          ID_EDIT_FIND_NEXT,      VIRTKEY 
+    VK_F3,          ID_EDIT_FIND_PREVIOUS,  VIRTKEY, SHIFT
 END
 
 
@@ -236,12 +240,20 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// BIN
+//
+
+IDR_DRIVER              BIN                     "res\\KObjExp.sys"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
 STRINGTABLE
 BEGIN
-    IDR_MAINFRAME           "Job Explorer v0.8 (C)2019 Pavel Yosifovich"
+    IDR_MAINFRAME           "Job Explorer v0.9 (C)2019 Pavel Yosifovich"
 END
 
 STRINGTABLE
@@ -329,17 +341,6 @@ BEGIN
 END
 
 #endif    // English (United States) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// English (United Kingdom) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
-#pragma code_page(1252)
-
-#endif    // English (United Kingdom) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

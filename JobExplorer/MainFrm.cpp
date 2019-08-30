@@ -11,6 +11,7 @@
 #include "ClipboardHelper.h"
 #include "SecurityHelper.h"
 #include "ProcessHelper.h"
+#include "DriverHelper.h"
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg) {
 	if (CFrameWindowImpl<CMainFrame>::PreTranslateMessage(pMsg))
@@ -190,6 +191,15 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 		GetWindowText(text);
 		text += L" (Administrator)";
 		SetWindowText(text);
+
+		bool driverLoaded = DriverHelper::IsDriverLoaded();
+		if (!driverLoaded)
+			driverLoaded = DriverHelper::LoadDriver();
+		if (!driverLoaded)
+			driverLoaded = DriverHelper::InstallDriver();
+		if (!driverLoaded) {
+			MessageBox(L"Failed to load kernel driver. Some job objects will not be shown.", L"Job Explorer", MB_ICONWARNING);
+		}
 	}
 	else {
 		m_CmdBar.AddIcon(SecurityHelper::GetShieldIcon(), ID_FILE_RUNASADMINISTRATOR);

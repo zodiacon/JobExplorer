@@ -203,6 +203,7 @@
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="ClipboardHelper.cpp" />
+    <ClCompile Include="DriverHelper.cpp" />
     <ClCompile Include="FormatHelper.cpp" />
     <ClCompile Include="JobExplorer.cpp" />
     <ClCompile Include="JobManager.cpp" />
@@ -220,6 +221,7 @@
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
     <ClInclude Include="ClipboardHelper.h" />
+    <ClInclude Include="DriverHelper.h" />
     <ClInclude Include="FormatHelper.h" />
     <ClInclude Include="IFrame.h" />
     <ClInclude Include="JobManager.h" />
@@ -246,6 +248,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="res\bin1.bin" />
+    <None Include="res\KObjExp.sys" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

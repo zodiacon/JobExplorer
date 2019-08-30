@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <AxialisIconCollection>
-  <Name></Name>
+  <Name>toolbar</Name>
   <Icon>
     <Name>playlist</Name>
     <StockIconName>playlist.axvi</StockIconName>

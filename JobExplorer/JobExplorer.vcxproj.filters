@@ -45,6 +45,9 @@
     <ClCompile Include="ProcessHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DriverHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -89,6 +92,9 @@
     <ClInclude Include="ProcessHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DriverHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JobExplorer.rc">
@@ -117,5 +123,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="res\bin1.bin">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\KObjExp.sys" />
   </ItemGroup>
 </Project>

@@ -2,6 +2,7 @@
 #include "JobManager.h"
 #include "NtDll.h"
 #include <algorithm>
+#include "DriverHelper.h"
 
 int JobManager::JobTypeIndex;
 
@@ -50,6 +51,9 @@ bool JobManager::EnumJobObjects() {
 			entry->Object = hi.Object;
 			entry->OpenHandles.emplace_back(OpenHandle((DWORD)hi.HandleValue, (DWORD)hi.UniqueProcessId));
 			auto hDup = DuplicateJobHandle(entry->Handle, entry->ProcessId);
+			if(!hDup)
+				hDup.reset(DriverHelper::OpenJobHandle(entry->Object));
+
 			if (hDup) {
 				DWORD size = 1 << 12;
 				BYTE buffer[1 << 12];
@@ -70,11 +74,12 @@ bool JobManager::EnumJobObjects() {
 				ULONG len;
 				if (STATUS_SUCCESS == ::NtQueryObject(hDup.get(), ObjectNameInformation, nameBuffer, sizeof(nameBuffer), &len)) {
 					auto info = (OBJECT_NAME_INFORMATION*)nameBuffer;
-					if(info->Name.Buffer)
+					if (info->Name.Buffer)
 						entry->Name = CString(info->Name.Buffer, info->Name.Length / sizeof(WCHAR));
 				}
 				entry->hDup = std::move(hDup);
 			}
+
 			_jobMap.insert({ entry->Object, entry });
 			_jobObjects.push_back(entry);
 		}
