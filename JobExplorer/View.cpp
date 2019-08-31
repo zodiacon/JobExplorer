@@ -39,8 +39,10 @@ void CView::RefreshJobList(JobManager& jm) {
 			{ L"Total Processes", 100, LVCFMT_RIGHT },
 			{ L"Silo ID", 100, LVCFMT_RIGHT },
 			{ L"Silo Type", 100 },
-			//{ L"Child Job" , 80 }
+			{ L"Child Jobs", 80, LVCFMT_RIGHT }
 		};
+
+		JobListColumnCount = _countof(columns);
 
 		int i = 0;
 		for (auto& c : columns)
@@ -233,9 +235,10 @@ void CView::GetDispInfoJobList(NMLVDISPINFO * di) {
 				break;
 
 			case 7:
-				if (data->ParentJob)
-					::StringCchCopy(item.pszText, item.cchTextMax, L"Yes");
+				if(!data->ChildJobs.empty())
+					::StringCchPrintf(item.pszText, item.cchTextMax, L"%d", (int)data->ChildJobs.size());
 				break;
+
 		}
 	}
 	if (item.mask & LVIF_IMAGE) {
@@ -315,6 +318,8 @@ bool CView::CompareJobs(const JobObjectEntry * j1, const JobObjectEntry * j2, co
 			return SortNumbers(j1->JobId, j2->JobId, si->SortAscending);
 		case 6:		// silo type
 			return SortStrings(GetSiloType(j1), GetSiloType(j2), si->SortAscending);
+		case 7:		// child jobs
+			return SortNumbers(j1->ChildJobs.size(), j2->ChildJobs.size(), si->SortAscending);
 	}
 	return false;
 }

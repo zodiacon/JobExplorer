@@ -76,6 +76,7 @@ private:
 	CComPtr<IListView> m_spListView;
 	std::vector<std::pair<CString, CString>> m_JobLimits;
 	IFrame* m_pFrame{ nullptr };
+	int JobListColumnCount;
 
 	// Inherited via IOwnerDataCallback
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void ** ppvObject) override;
