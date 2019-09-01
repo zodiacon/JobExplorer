@@ -3,11 +3,12 @@
 #include "SecurityHelper.h"
 #include "resource.h"
 
-#define IOCTL_KOBJEXP_OPEN_OBJECT	CTL_CODE(0x8000, 0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_KOBJEXP_DUP_HANDLE	CTL_CODE(0x8000, 0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-struct OpenObjectData {
-	void* Address;
-	ACCESS_MASK Access;
+struct DupHandleData {
+	ULONG Handle;
+	ULONG SourcePid;
+	ACCESS_MASK AccessMask;
 };
 
 HANDLE DriverHelper::_hDevice;
@@ -65,20 +66,22 @@ bool DriverHelper::InstallDriver() {
 	return ::StartService(hService.get(), 0, nullptr) ? true : false;
 }
 
-HANDLE DriverHelper::OpenJobHandle(void * pObject) {
+HANDLE DriverHelper::OpenJobHandle(HANDLE hSource, ULONG pid) {
 	if (!_hDevice) {
-		_hDevice = ::CreateFile(L"\\\\.\\KObjExp", GENERIC_ALL, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+		_hDevice = ::CreateFile(L"\\\\.\\KObjExp", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 
+			nullptr, OPEN_EXISTING, 0, nullptr);
 		if (_hDevice == INVALID_HANDLE_VALUE)
 			return nullptr;
 	}
 
-	OpenObjectData data;
-	data.Access = JOB_OBJECT_ALL_ACCESS;
-	data.Address = pObject;
+	DupHandleData data;
+	data.AccessMask = JOB_OBJECT_ALL_ACCESS;
+	data.Handle = HandleToULong(hSource);
+	data.SourcePid = pid;
 
 	DWORD bytes;
 	HANDLE hJob;
-	return ::DeviceIoControl(_hDevice, IOCTL_KOBJEXP_OPEN_OBJECT, &data, sizeof(data), &hJob, sizeof(hJob), &bytes, nullptr)
+	return ::DeviceIoControl(_hDevice, IOCTL_KOBJEXP_DUP_HANDLE, &data, sizeof(data), &hJob, sizeof(hJob), &bytes, nullptr)
 		? hJob : nullptr;
 }
 
@@ -87,7 +90,7 @@ bool DriverHelper::IsDriverLoaded() {
 	if (!hScm)
 		return false;
 
-	wil::unique_schandle hService(::OpenService(hScm.get(), L"KObjExp", SERVICE_ALL_ACCESS));
+	wil::unique_schandle hService(::OpenService(hScm.get(), L"KObjExp", SERVICE_QUERY_STATUS));
 	if (!hService)
 		return false;
 

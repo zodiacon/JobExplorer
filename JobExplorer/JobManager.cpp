@@ -52,7 +52,7 @@ bool JobManager::EnumJobObjects() {
 			entry->OpenHandles.emplace_back(OpenHandle((DWORD)hi.HandleValue, (DWORD)hi.UniqueProcessId));
 			auto hDup = DuplicateJobHandle(entry->Handle, entry->ProcessId);
 			if(!hDup)
-				hDup.reset(DriverHelper::OpenJobHandle(entry->Object));
+				hDup.reset(DriverHelper::OpenJobHandle(entry->Handle, entry->ProcessId));
 
 			if (hDup) {
 				DWORD size = 1 << 12;
