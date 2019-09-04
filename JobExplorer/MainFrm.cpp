@@ -202,13 +202,7 @@ LRESULT CMainFrame::OnCreate(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/
 		}
 	}
 	else {
-		if (DriverHelper::IsDriverLoaded()) {
-			menu.GetSubMenu(0).DeleteMenu(ID_FILE_RUNASADMINISTRATOR, MF_BYCOMMAND);
-			menu.GetSubMenu(0).DeleteMenu(0, MF_BYPOSITION);	// delete separator
-		}
-		else {
-			m_CmdBar.AddIcon(SecurityHelper::GetShieldIcon(), ID_FILE_RUNASADMINISTRATOR);
-		}
+		m_CmdBar.AddIcon(SecurityHelper::GetShieldIcon(), ID_FILE_RUNASADMINISTRATOR);
 	}
 
 	m_CmdBar.AttachMenu(menu);
